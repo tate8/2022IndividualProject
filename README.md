@@ -1,4 +1,4 @@
-# AI Flashcards - 2022 Individual Programming Project
+# AI Flashcards
 
 
 
@@ -40,6 +40,11 @@ In addition, I used early stopping to reduce overfitting, and Nadam optimization
 <br>
 ### Dataset
 &emsp;I used Google's [Quick, Draw! dataset](https://github.com/googlecreativelab/quickdraw-dataset). This included about 50 million 28x28 greyscale images composed of 345 categories of various objects, simply hand drawn.
+
+
+### Where it struggles
+The model has trouble predicting classes that are not easily separable. Consider the two classes of "circle" and "octagon", or "cloud" and "bush". Especially when drawn with a cursor, drawn images of these classes can be tough for the model to classify correctly.
+
 
 <p align="center">
     <b>Logic Flowchart</b>
