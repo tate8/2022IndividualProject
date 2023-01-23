@@ -10,10 +10,13 @@ import tensorflow as tf
 
 from storage import Storage
 # this file holds the structure for the custom ResidualUnit layer in my CNN architecture
-from machine_learning.ResidualUnit import ResidualUnit
 
-my_tf_saved_model = tf.keras.models.load_model('./machine_learning/my_doodle_model2.4.1.h5', custom_objects={'ResidualUnit': ResidualUnit})
+interpreter = tf.lite.Interpreter(model_path="./machine_learning/sparse_doodle_model.tflite")
 
+# Get input and output tensors.
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+interpreter.allocate_tensors()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(20)
@@ -77,7 +80,6 @@ def get_post_pixel_data():
 
     # reshape flattened image to a square
     side_len = int(math.sqrt(image.shape[0]))
-
     image = np.resize(image, (side_len, side_len))
 
     # now resize it to 28x28 which the machine learning model accepts
@@ -85,20 +87,26 @@ def get_post_pixel_data():
     resized_image = cv2.resize(image, dsize=(28, 28), interpolation=cv2.INTER_NEAREST)
 
     # create numpy array of shape (1, 28, 28) for model
-    model_input = np.array(resized_image, dtype=np.uint8).reshape((-1, 28, 28))
+    model_input = np.array(resized_image, dtype=np.float32).reshape((-1, 28, 28))
 
     class_names = None
     # these class names' order are compatible with the model
     with open('categories.txt') as f:
         class_names = f.readlines()
 
-    class_predictions = my_tf_saved_model.predict(model_input)
+    # Test the model on random input data.
+    input_shape = input_details[0]['shape']
+    interpreter.set_tensor(input_details[0]['index'], model_input)
+
+    interpreter.invoke()
+
+    class_predictions = interpreter.get_tensor(output_details[0]['index'])
     # get top 5 predict indices
     predict_indices = np.argsort(class_predictions, axis=1)[:, -5:]
     top_prediction_idx = np.argmax(class_predictions, axis=-1)
     top_prediction = class_names[top_prediction_idx[0]]
     predict_classes = [class_names[i] for i in predict_indices[0]]
-
+    print(predict_classes)
 
     ##### UPDATE MESSAGE
 
